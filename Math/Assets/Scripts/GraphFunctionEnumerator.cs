@@ -2,6 +2,8 @@
 
     Sine,
     Sine2D,
-    MultiSine
+    Sine2DAlt,
+    MultiSine,
+    MultiSine2D
 
 }

@@ -16,11 +16,11 @@ public class Graph : MonoBehaviour {
     public GraphFunctionEnumerator functionDropdownSelection;
     
     //Values for adjusting the graph function
-    [Header("Resoltution of the graph(needs to be set before entering Play Mode)")]
+    [Header("Resoltution of the graph")]
     [Range(10,100)] public int resolution = 50;
-    [Header("Used for Sinus and Multisinus")]
+    [Header("Used for frequenzy of the main sinus")]
     [Range(0,5)] public int sinFrequenzyMultiplier = 1;
-    [Header("Used for Multisinus only")]
+    [Header("Used for Multisinus and 2D sinus only")]
     [Range(0,5)] public int multisinModulationFactor = 2;
     [Range(0,5)] public int multisinMorphingFactor = 1;
 
@@ -35,8 +35,18 @@ public class Graph : MonoBehaviour {
 
     //Transform array for all the points
     Transform[] points;
+
     //Array of graphfunctions instatiated with all available functions passed in
-    GraphFunctionDelegate[] graphFunctions = { SineFunction, Sine2DFunction, MultiSineFunction };
+    GraphFunctionDelegate[] graphFunctions = {
+
+        SineFunction,
+        Sine2DFunction,
+        Sine2DAlternateFunction,
+        MultiSineFunction,
+        MultiSine2DFunction
+
+
+    };
 
     private void Awake() {
 
@@ -133,9 +143,28 @@ public class Graph : MonoBehaviour {
 
     }
 
+    static float MultiSine2DFunction(float _x, float _z, float _time) {
+
+        float result = 4f * Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _z + _time * 0.5f));
+        result += Mathf.Sin(pi * (_x * s_multisinModulationFactor + _time));
+        result += Mathf.Sin(2f * pi * (_z * s_multisinMorphingFactor + 2f * _time)) * 0.5f;
+        result *= 1f / 5.5f;
+        return result;
+
+    }
+
     static float Sine2DFunction(float _x, float _z, float _time) {
 
-        return Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _z + _time));
+        return Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x * s_multisinModulationFactor + _z * s_multisinMorphingFactor + _time));
+
+    }
+
+    static float Sine2DAlternateFunction(float _x, float _z, float _time) {
+
+        float result = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x * s_multisinModulationFactor + _time));
+        result += Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_z * s_multisinMorphingFactor + _time));
+        result *= 0.5f;
+        return result;
 
     }
 
