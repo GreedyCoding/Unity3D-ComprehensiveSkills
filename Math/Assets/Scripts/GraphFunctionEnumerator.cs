@@ -4,6 +4,9 @@
     Sine2D,
     Sine2DAlt,
     MultiSine,
-    MultiSine2D
+    MultiSine2D,
+    Ripple,
+    Cylinder,
+    Sphere
 
 }

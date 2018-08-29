@@ -283,7 +283,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80284859fa9a7c14994d4e9f6998b22e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  functionDropdownSelection: 0
+  functionDropdownSelection: 4
   resolution: 100
   sinFrequenzyMultiplier: 1
   multisinModulationFactor: 2

@@ -25,9 +25,9 @@ public class Graph : MonoBehaviour {
     [Range(0,5)] public int multisinMorphingFactor = 1;
 
     //Static values that get updated in Update() to be used in the static functions
-    public static int s_sinFrequenzyMultiplier = 1;
-    public static int s_multisinModulationFactor = 2;
-    public static int s_multisinMorphingFactor = 1;
+    private static int s_sinFrequenzyMultiplier = 1;
+    private static int s_multisinModulationFactor = 2;
+    private static int s_multisinMorphingFactor = 1;
 
     //Refernce to the pointprefab that gets instantiated
     [Header("Prefab used for the points")]
@@ -43,8 +43,10 @@ public class Graph : MonoBehaviour {
         Sine2DFunction,
         Sine2DAlternateFunction,
         MultiSineFunction,
-        MultiSine2DFunction
-
+        MultiSine2DFunction,
+        Ripple,
+        Cylinder,
+        Sphere
 
     };
 
@@ -54,42 +56,21 @@ public class Graph : MonoBehaviour {
         float step = 2f / resolution;
         //Calculation the scale out of the loop cause it is only required once
         Vector3 scale = Vector3.one * step;
-        //Initializing an position vector and setting y and z value to 0 initially
-        Vector3 position;    position.y = 0f;    position.z = 0f;
 
         //Creating a new Transform array for our points
         points = new Transform[resolution * resolution];
-
-        //Looping through the layers(Z-Coordinates) first and then looping through all
-        //X-Coordinates and instantiating points there. Y-Coordinates get manipluated in update
-        for (int index = 0, zCoordinate = 0; zCoordinate < resolution; zCoordinate++) {
-
-            //We can set the z position here because we only change z values inside this loop
-            position.z = (zCoordinate + pointOffset) * step - scaleOffset;
-
-            for (int xCoordinate = 0; xCoordinate < resolution; xCoordinate++, index++) {
-
-                //Instantiating a point from the pointPrefab
-                Transform point = Instantiate(pointPrefab);
-
-                //Setting x value along the scale
-                //Adding pointoffset to index to set the point on the right spot on the scale
-                //Multiplying by step to set it at the right position
-                //And substracting scaleOffset (in this case 1 so we have a scale from -1 to 1)
-                position.x = (xCoordinate + pointOffset) * step - scaleOffset;
-                //Set position of the point to the calcualted position
-                point.localPosition = position;
-                //Set scale of the point to the calcualted scale
-                point.localScale = scale;
-                //Setting the Graph object as parent and 
-                //Adding false as second argument so unity will not attemt to keep the object at its original world position, rotation, and scale
-                point.SetParent(transform, false);
-
-                //Adding the point to the according spot in the array
-                points[index] = point;
-
-            }
-
+        
+        //Loop through the point array
+        for (int index = 0; index < points.Length; index++) {
+            //And instantiate a point on every spot
+            Transform point = Instantiate(pointPrefab);
+            //Set points scale to the calculated scale
+            point.localScale = scale;
+            //Set the Graph as parent to the points
+            //false makes the object keep its local orientation rather than its global orientation.
+            point.SetParent(transform, false);
+            //store the created point at the current array spot
+            points[index] = point;
         }
 
     }
@@ -101,18 +82,19 @@ public class Graph : MonoBehaviour {
         //Setting a delegate for the currently in the dropdown selected function
         GraphFunctionDelegate graphFunction = graphFunctions[(int)functionDropdownSelection] ;
 
-        //Looping through all the points
-        for (int index = 0; index < points.Length; index++) {
+        float step = 2f / resolution;
+        //Looping through all the layers
+        for (int index = 0, z = 0; z < resolution; z++) {
+            //And calulating v value to fit on scale
+            float v = (z + pointOffset) * step - scaleOffset;
+            //Looping through all the rows 
+            for (int x = 0; x < resolution; x++, index++) {
+                //Calculating u value to fit scale
+                float u = (x + pointOffset) * step - scaleOffset;
+                //Set localposition of the point to the vector that will be returned from the selected function
+                points[index].localPosition = graphFunction(u, v, time);
 
-            //Getting the current point and storing it in a transform variable
-            Transform point = points[index];
-            //Storing the points localposition in a position vector
-            Vector3 position = point.localPosition;
-            //Manipulating the y postion based on the x positon and the current time
-            position.y = graphFunction(position.x, position.z, time);
-            //Setting the local postion to the manipulated position vector
-            point.localPosition = position;
-
+            }
         }
 
         //Setting the static equal to the according slider values in the inspector beacuse the functions have to be static to be
@@ -123,15 +105,21 @@ public class Graph : MonoBehaviour {
 
     }
 
-    static float SineFunction(float _x, float _z, float _time) {
+    static Vector3 SineFunction(float _x, float _z, float _time) {
 
+        Vector3 result;
+        result.x = _x;
         //Returns the sinus of x plus time 
-        return Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _time));
+        result.y = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _time));
+        result.z = _z;
+        return result;
 
     }
 
-    static float MultiSineFunction(float _x, float _z, float _time) {
+    static Vector3 MultiSineFunction(float _x, float _z, float _time) {
 
+        Vector3 result;
+        result.x = _x;
         //Calculates the sinus of x plus time
         float sinOfX = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _time));
         //Adds another sinus calculation to the the sinOfX
@@ -139,32 +127,101 @@ public class Graph : MonoBehaviour {
         //Devide the value by 1.5 because the amplitude is 1.5 now
         doubleSinOfX *= 2f / 3f;
         //Returns the adjusted value
-        return doubleSinOfX;
-
-    }
-
-    static float MultiSine2DFunction(float _x, float _z, float _time) {
-
-        float result = 4f * Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _z + _time * 0.5f));
-        result += Mathf.Sin(pi * (_x * s_multisinModulationFactor + _time));
-        result += Mathf.Sin(2f * pi * (_z * s_multisinMorphingFactor + 2f * _time)) * 0.5f;
-        result *= 1f / 5.5f;
+        result.y = doubleSinOfX;
+        result.z = _z;
         return result;
 
     }
 
-    static float Sine2DFunction(float _x, float _z, float _time) {
+    static Vector3 MultiSine2DFunction(float _x, float _z, float _time) {
 
-        return Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x * s_multisinModulationFactor + _z * s_multisinMorphingFactor + _time));
+        Vector3 result;
+        result.x = _x;
+        float yValue = 4f * Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x + _z + _time * 0.5f));
+        yValue += Mathf.Sin(pi * (_x * s_multisinModulationFactor + _time));
+        yValue += Mathf.Sin(2f * pi * (_z * s_multisinMorphingFactor + 2f * _time)) * 0.5f;
+        yValue *= 1f / 5.5f;
+        result.y = yValue;
+        result.z = _z;
+        return result;
+
 
     }
 
-    static float Sine2DAlternateFunction(float _x, float _z, float _time) {
+    static Vector3 Sine2DFunction(float _x, float _z, float _time) {
 
-        float result = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x * s_multisinModulationFactor + _time));
-        result += Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_z * s_multisinMorphingFactor + _time));
-        result *= 0.5f;
+        Vector3 result;
+        result.x = _x;
+        result.y = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x * s_multisinModulationFactor + _z * s_multisinMorphingFactor + _time));
+        result.z = _z;
         return result;
+
+    }
+
+    static Vector3 Sine2DAlternateFunction(float _x, float _z, float _time) {
+
+        Vector3 result;
+        result.x = _x;
+        float yValue = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_x * s_multisinModulationFactor + _time));
+        yValue += Mathf.Sin(pi * s_sinFrequenzyMultiplier * (_z * s_multisinMorphingFactor + _time));
+        yValue *= 0.5f;
+        result.y = yValue;
+        result.z = _z;
+        return result;
+
+    }
+
+    static Vector3 Ripple (float _x, float _z, float _time) {
+
+        Vector3 result;
+        result.x = _x;
+        //Getting the distance of the object to the originpoint
+        float distance = Mathf.Sqrt(_x * _x + _z * _z);
+        //Taking sin of distance to create the ripple and substracting time because the ripple should move outwards
+        float yValue = Mathf.Sin(pi * s_sinFrequenzyMultiplier * (distance - _time/2));
+        //Reducing the amplitude of the ripple because it was far to extreme and including the distance
+        //into the function so the ripples get less amplitude the farhter they are away from the origin
+        yValue /= 1f + 10f * distance;
+        result.y = yValue;
+        result.z = _z;
+        return result;
+
+    }
+
+    static Vector3 Cylinder(float _u, float _v, float _time) {
+
+        Vector3 result;
+        //float r = 0.8f + Mathf.Sin(pi * (6f * _u + 2f * _v + _time)) * 0.2f;
+        float r = 1f;
+        result.x = r * Mathf.Sin(pi * _u);
+        result.y = _v;
+        result.z = r * Mathf.Cos(pi * _u);
+        return result;
+
+    }
+
+    static Vector3 Sphere(float _u, float _v, float _time) {
+
+        Vector3 result;
+        //Adding another wave as r to reduce its radius at its top and bottom to zero
+        float r = Mathf.Cos(pi * _v * 0.5f);
+        result.x = r * Mathf.Sin(pi * _u);
+        result.y = Mathf.Sin(pi * 0.5f * _v);
+        result.z = r * Mathf.Cos(pi * _u);
+        return result;
+
+        #region Pulsating Sphere
+
+        //Vector3 result;
+        //float r = 0.8f + Mathf.Sin(pi * (6f * _u + _time)) * 0.1f;
+        //r += Mathf.Sin(pi * (4f * _v + _time)) * 0.1f;
+        //float s = r * Mathf.Cos(pi * 0.5f * _v);
+        //result.x = s * Mathf.Sin(pi * _u);
+        //result.y = r * Mathf.Sin(pi * 0.5f * _v);
+        //result.z = s * Mathf.Cos(pi * _u);
+        //return result;
+
+        #endregion
 
     }
 
