@@ -46,7 +46,8 @@ public class Graph : MonoBehaviour {
         MultiSine2DFunction,
         Ripple,
         Cylinder,
-        Sphere
+        Sphere,
+        Torus
 
     };
 
@@ -222,6 +223,21 @@ public class Graph : MonoBehaviour {
         //return result;
 
         #endregion
+
+    }
+
+    static Vector3 Torus(float _u, float _v, float _time) {
+
+        Vector3 result;
+        //float r1 = 0.65f + Mathf.Sin(pi * (6f * _u + _time)) * 0.1f;
+        //float r2 = 0.2f + Mathf.Sin(pi * (4f * _v + _time)) * 0.05f;
+        float r1 = 1f;
+        float r2 = 0.5f;
+        float s = r2 * Mathf.Cos(pi * _v) + r1;
+        result.x = s * Mathf.Sin(pi * _u);
+        result.y = r2 * Mathf.Sin(pi * _v);
+        result.z = s * Mathf.Cos(pi * _u);
+        return result;
 
     }
 
