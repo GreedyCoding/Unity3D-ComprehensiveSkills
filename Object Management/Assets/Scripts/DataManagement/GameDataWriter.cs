@@ -43,4 +43,14 @@ public class GameDataWriter
         writer.Write(value.y);
         writer.Write(value.z);
     }
+
+    //Writing 3 floats with the binary writer to store r,g,b and alpha values of the Color
+    //Need to get the values back in the same order in the GameDataReader
+    public void Write(Color value)
+    {
+        writer.Write(value.r);
+        writer.Write(value.g);
+        writer.Write(value.b);
+        writer.Write(value.a);
+    }
 }

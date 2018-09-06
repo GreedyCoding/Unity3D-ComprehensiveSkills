@@ -13,11 +13,12 @@ public class PersistantStorage : MonoBehaviour
     }
 
     //Will be used to store the gamestate in a file at the in awake created path
-    public void Save (PersistableObject persistableObject)
+    public void Save (PersistableObject persistableObject, int version)
     {
         //using used from catlikecoding instead of try and catch
         using (var writer = new BinaryWriter(File.Open(savePath, FileMode.Create)))
         {
+            writer.Write(-version);
             persistableObject.Save(new GameDataWriter(writer));
         }
     }
@@ -26,7 +27,8 @@ public class PersistantStorage : MonoBehaviour
     {
         using (var reader = new BinaryReader(File.Open(savePath, FileMode.Open)))
         {
-            persistableObject.Load(new GameDataReader(reader));
+            int version = -reader.ReadInt32();
+            persistableObject.Load(new GameDataReader(reader, version));
         }
     }
 

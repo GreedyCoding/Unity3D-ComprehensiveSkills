@@ -6,14 +6,21 @@ using UnityEngine;
 public class ShapeFactory : ScriptableObject
 {
     [SerializeField] private Shape[] prefabs;
+    [SerializeField] private Material[] materials;
 
-    public Shape GetShape (int shapeId)
+    public Shape GetShape (int shapeId, int materialId)
     {
-        return Instantiate(prefabs[shapeId]);
+        Shape instance = Instantiate(prefabs[shapeId]);
+        //Setting the shape id
+        instance.ShapeId = shapeId;
+        //Setting the material with the setmaterial function from the shape because the set is private
+        instance.SetMaterial(materials[materialId], materialId);
+        return instance;
     }
 
     public Shape GetRandomShape()
-    {
-        return GetShape(Random.Range(0, prefabs.Length));
+    {   
+        //Return a Shape with a random prefab and a random material
+        return GetShape(Random.Range(0, prefabs.Length), Random.Range(0, materials.Length));
     }
 }

@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Name: Shape Factory
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 114816452346894608, guid: 4f46d024241dc3944bc8bfc2fd03e102, type: 2}
   - {fileID: 114354632449647036, guid: 822543b208d6e00488bca4fb0dd83425, type: 2}
+  - {fileID: 114816452346894608, guid: 4f46d024241dc3944bc8bfc2fd03e102, type: 2}
   - {fileID: 114447252190016842, guid: c47e1bbf720a95d4aaf019556f4a4cbe, type: 2}
+  materials:
+  - {fileID: 2100000, guid: 9e420a169dd2a2c43a6b479acb580237, type: 2}
+  - {fileID: 2100000, guid: 491b2e6771af4804db073e2f303478d2, type: 2}
+  - {fileID: 2100000, guid: 1a968b528ff94cf42bab08d4e25a79a9, type: 2}
