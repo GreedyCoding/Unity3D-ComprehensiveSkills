@@ -11,12 +11,18 @@ public class ObjectSpawner : PersistableObject
     [SerializeField] private float spawnRadius = 5f;
 
     [SerializeField] private KeyCode createKey = KeyCode.C;
-    [SerializeField] private KeyCode deleteKey = KeyCode.D;
+    [SerializeField] private KeyCode destroyKey = KeyCode.D;
     [SerializeField] private KeyCode newGameKey = KeyCode.N;
     [SerializeField] private KeyCode saveKey = KeyCode.S;
     [SerializeField] private KeyCode loadKey = KeyCode.L;
 
+    private float creationProgress;
+    private float destrucionProgress;
+
     private List<Shape> shapes;
+
+    public float CreationSpeed { get; set; }
+    public float DestructionSpeed { get; set; }
 
     private void Awake()
     {
@@ -30,6 +36,10 @@ public class ObjectSpawner : PersistableObject
         if (Input.GetKeyDown(createKey))
         {
             CreateShape();
+        }
+        else if (Input.GetKeyDown(destroyKey))
+        {
+            DestroyShape();
         }
         else if (Input.GetKeyDown(newGameKey))
         {
@@ -47,6 +57,32 @@ public class ObjectSpawner : PersistableObject
             //Then loading the saved spawner from the storage
             storage.Load(this);
         }
+
+        creationProgress += Time.deltaTime * CreationSpeed;
+        while (creationProgress >= 1f)
+        {
+            creationProgress -= 1f;
+            CreateShape();
+        }
+
+        destrucionProgress += Time.deltaTime * DestructionSpeed;
+        while (destrucionProgress >= 1f)
+        {
+            destrucionProgress -= 1f;
+            DestroyShape();
+        }
+    }
+
+
+    void BeginNewGame()
+    {
+        //Looping through all the objects and destroying their gameobjects
+        for (int i = 0; i < shapes.Count; i++)
+        {
+            Destroy(shapes[i].gameObject);
+        }
+        //The list still has references to the destroyed objects so its needed to be cleared as well
+        shapes.Clear();
     }
 
     void CreateShape()
@@ -72,15 +108,21 @@ public class ObjectSpawner : PersistableObject
         shapes.Add(tempShape);
     }
 
-    void BeginNewGame()
+    void DestroyShape()
     {
-        //Looping through all the objects and destroying their gameobjects
-        for (int i = 0; i < shapes.Count; i++)
+        if (shapes.Count > 0)
         {
-            Destroy(shapes[i].gameObject);
+            //Get a random index
+            int index = Random.Range(0, shapes.Count);
+            //Destroy the gameobject
+            Destroy(shapes[index].gameObject);
+            //Getting the last index of the array
+            int lastIndex = shapes.Count - 1;
+            //To shift the last shape to the spot we just removed from
+            shapes[index] = shapes[lastIndex];
+            //And then we remove the last shape
+            shapes.RemoveAt(lastIndex);
         }
-        //The list still has references to the destroyed objects so its needed to be cleared as well
-        shapes.Clear();
     }
 
     public override void Save(GameDataWriter writer)

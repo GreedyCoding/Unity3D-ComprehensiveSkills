@@ -14,7 +14,7 @@ public class FPSDisplay : MonoBehaviour
     private struct FPSColor
     {
         public Color color;
-        public int minimumFps;
+        public int minimumFPS;
     }
 
     [SerializeField]
@@ -32,7 +32,7 @@ public class FPSDisplay : MonoBehaviour
         label.text = fps.ToString();
         for (int i = 0; i < coloring.Length; i++)
         {
-            if (fps >= coloring[i].minimumFps)
+            if (fps >= coloring[i].minimumFPS)
             {
                 label.color = coloring[i].color;
                 break;
