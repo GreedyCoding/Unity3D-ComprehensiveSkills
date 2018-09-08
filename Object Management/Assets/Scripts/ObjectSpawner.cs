@@ -1,14 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ObjectSpawner : PersistableObject
 {
-    const int buildVersion = 1;
+    const int buildVersion = 2;
 
     [SerializeField] private ShapeFactory shapeFactory;
     [SerializeField] private PersistantStorage storage;
+    [SerializeField] private SpawnZone spawnZone;
 
     [SerializeField] private float spawnRadius = 5f;
+
+    [SerializeField] private int levelCount;
 
     [SerializeField] private KeyCode createKey = KeyCode.C;
     [SerializeField] private KeyCode destroyKey = KeyCode.D;
@@ -19,6 +24,8 @@ public class ObjectSpawner : PersistableObject
     private float creationProgress;
     private float destrucionProgress;
 
+    private int loadedLevelBuildIndex;
+
     private List<Shape> shapes;
 
     public float CreationSpeed { get; set; }
@@ -26,9 +33,30 @@ public class ObjectSpawner : PersistableObject
 
     private void Awake()
     {
-        Application.targetFrameRate = 300;
         //Initializing the list of peristable objects
         shapes = new List<Shape>();
+    }
+
+    private void Start()
+    {
+        if (Application.isEditor)
+        {
+            //Loop through all scenes
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                //Get the currently loaded screen
+                Scene loadedScene = SceneManager.GetSceneAt(i);
+                if (loadedScene.name.Contains("Level"))
+                {
+                    //Set this scene to active if it contains level as string
+                    SceneManager.SetActiveScene(loadedScene);
+                    //Set the loaded level build index
+                    loadedLevelBuildIndex = loadedScene.buildIndex;
+                    return;
+                }
+            }
+        }
+        StartCoroutine(LoadLevel(1));
     }
 
     private void Update()
@@ -57,6 +85,18 @@ public class ObjectSpawner : PersistableObject
             //Then loading the saved spawner from the storage
             storage.Load(this);
         }
+        else
+        {
+            for (int i = 1; i <= levelCount; i++)
+            {
+                if (Input.GetKeyDown(KeyCode.Alpha0 + i))
+                {
+                    BeginNewGame();
+                    StartCoroutine(LoadLevel(i));
+                    return;
+                }
+            }
+        }
 
         creationProgress += Time.deltaTime * CreationSpeed;
         while (creationProgress >= 1f)
@@ -77,9 +117,10 @@ public class ObjectSpawner : PersistableObject
     void BeginNewGame()
     {
         //Looping through all the objects and destroying their gameobjects
-        for (int i = 0; i < shapes.Count; i++)
+        for (int index = 0; index < shapes.Count; index++)
         {
-            Destroy(shapes[i].gameObject);
+            //Reclaiming all the shapes when beginning a new game
+            shapeFactory.ReclaimShape(shapes[index]);
         }
         //The list still has references to the destroyed objects so its needed to be cleared as well
         shapes.Clear();
@@ -92,7 +133,7 @@ public class ObjectSpawner : PersistableObject
         //And get the transform of this object to manipulate it
         Transform objectTransform = tempShape.transform;
         //Set the position to a random point in a sphere
-        objectTransform.localPosition = Random.insideUnitSphere * spawnRadius;
+        objectTransform.localPosition = spawnZone.SpawnPoint;
         //Give it a random rotation
         objectTransform.localRotation = Random.rotation;
         //And scale
@@ -115,7 +156,7 @@ public class ObjectSpawner : PersistableObject
             //Get a random index
             int index = Random.Range(0, shapes.Count);
             //Destroy the gameobject
-            Destroy(shapes[index].gameObject);
+            shapeFactory.ReclaimShape(shapes[index]);
             //Getting the last index of the array
             int lastIndex = shapes.Count - 1;
             //To shift the last shape to the spot we just removed from
@@ -129,6 +170,8 @@ public class ObjectSpawner : PersistableObject
     {
         //Write the current count of objects to the savefile
         writer.Write(shapes.Count);
+        //Write the currently loaded level to the savefile
+        writer.Write(loadedLevelBuildIndex);
         for (int i = 0; i < shapes.Count; i++)
         {
             //Write the shapeid of the current shape to the file 
@@ -162,7 +205,8 @@ public class ObjectSpawner : PersistableObject
             //Else we read the count now because we read a version number
             count = reader.ReadInt();
         }
-
+        //Set the level index to 1 if the saveVersion is smaller then 2 otherwise get the saved level from the memory
+        StartCoroutine(LoadLevel(saveVersion < 2 ? 1 : reader.ReadInt()));
         //For every saved object
         for (int i = 0; i < count; i++)
         {
@@ -178,4 +222,18 @@ public class ObjectSpawner : PersistableObject
             shapes.Add(tempShape);
         }
     }
+
+    IEnumerator LoadLevel(int levelBuildIndex)
+    {
+        enabled = false;
+        if(loadedLevelBuildIndex > 0)
+        {
+            yield return SceneManager.UnloadSceneAsync(loadedLevelBuildIndex);
+        }
+        yield return SceneManager.LoadSceneAsync(levelBuildIndex, LoadSceneMode.Additive);
+        SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(levelBuildIndex));
+        loadedLevelBuildIndex = levelBuildIndex;
+        enabled = true;
+    }
+
 }
