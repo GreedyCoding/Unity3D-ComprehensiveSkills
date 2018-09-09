@@ -55,7 +55,7 @@ public class ObjectSpawner : PersistableObject
             {
                 //Get the currently loaded screen
                 Scene loadedScene = SceneManager.GetSceneAt(i);
-                if (loadedScene.name.Contains("Level"))
+                if (loadedScene.name.Contains("Level "))
                 {
                     //Set this scene to active if it contains level as string
                     SceneManager.SetActiveScene(loadedScene);
@@ -241,14 +241,21 @@ public class ObjectSpawner : PersistableObject
 
     IEnumerator LoadLevel(int levelBuildIndex)
     {
+        //Disabling the objectspawner while loading the level
         enabled = false;
+        //If loadedLevelBuildIndex is bigger then 0 we have loaded a scene already
         if(loadedLevelBuildIndex > 0)
         {
+            //So unload the scene and yield until the unloading is finished
             yield return SceneManager.UnloadSceneAsync(loadedLevelBuildIndex);
         }
+        //Loading the scene asynchronously and yielding until the scene is fully loaded
         yield return SceneManager.LoadSceneAsync(levelBuildIndex, LoadSceneMode.Additive);
+        //then set this scene as active
         SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(levelBuildIndex));
+        //and set the loadedLevelSceneIndex to the index of the level we just load
         loadedLevelBuildIndex = levelBuildIndex;
+        //Enabling the objectspawner again after loading is finished
         enabled = true;
     }
 

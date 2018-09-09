@@ -12,6 +12,7 @@ public class ShapeFactory : ScriptableObject
 
     private List<Shape>[] objectPools;
 
+    //Creating a refernece to the poolscene we pool our objects to
     private Scene poolScene;
 
     public Shape GetShape (int shapeId, int materialId)
@@ -73,17 +74,22 @@ public class ShapeFactory : ScriptableObject
 
     public void ReclaimShape (Shape shapeToRecycle)
     {
+        //If recycling is enabled we put the shape that should be destroyed back into the according pool
         if (recyclingEnabled)
         {
+            //If there are no pools yet we create them beforehand
             if (objectPools == null)
             {
                 CreatePools();
             }
+            //Put the object into the pool according to the shapeId
             objectPools[shapeToRecycle.ShapeId].Add(shapeToRecycle);
+            //and set the gameobject we just pooled to inactive so it will not be rendered
             shapeToRecycle.gameObject.SetActive(false);
         }
         else
         {
+            //If recycling is disable simply destroy the gameobject
             Destroy(shapeToRecycle.gameObject);
         }
     }
