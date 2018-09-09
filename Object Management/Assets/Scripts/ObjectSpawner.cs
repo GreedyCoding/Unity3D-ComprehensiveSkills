@@ -9,7 +9,6 @@ public class ObjectSpawner : PersistableObject
 
     [SerializeField] private ShapeFactory shapeFactory;
     [SerializeField] private PersistantStorage storage;
-    [SerializeField] private SpawnZone spawnZone;
 
     [SerializeField] private float spawnRadius = 5f;
 
@@ -28,13 +27,23 @@ public class ObjectSpawner : PersistableObject
 
     private List<Shape> shapes;
 
+    public static ObjectSpawner Instance { get; private set; }
+
     public float CreationSpeed { get; set; }
     public float DestructionSpeed { get; set; }
+
+    public SpawnZone SpawnZoneOfLevel { get; set; }
 
     private void Awake()
     {
         //Initializing the list of peristable objects
         shapes = new List<Shape>();
+    }
+
+    private void OnEnable()
+    {
+        //Set this object spawner as the static object spawner instance
+        Instance = this;
     }
 
     private void Start()
@@ -87,24 +96,31 @@ public class ObjectSpawner : PersistableObject
         }
         else
         {
+            //Loop through all levels
             for (int i = 1; i <= levelCount; i++)
             {
+                //And check the all the number keys
                 if (Input.GetKeyDown(KeyCode.Alpha0 + i))
                 {
+                    //if we got a number press begin a new game
                     BeginNewGame();
+                    //and start the coroutine to load the level of the corrisponding keypress
                     StartCoroutine(LoadLevel(i));
                     return;
                 }
             }
         }
 
+        //Adding time.deltatime to progress to count up every frame multiplied by creationspeed
         creationProgress += Time.deltaTime * CreationSpeed;
+        //As long as creationprogress is bigger then 1 we create 1 shape and substract 1 from progress
         while (creationProgress >= 1f)
         {
             creationProgress -= 1f;
             CreateShape();
         }
 
+        //Same logic for the destruction
         destrucionProgress += Time.deltaTime * DestructionSpeed;
         while (destrucionProgress >= 1f)
         {
@@ -133,7 +149,7 @@ public class ObjectSpawner : PersistableObject
         //And get the transform of this object to manipulate it
         Transform objectTransform = tempShape.transform;
         //Set the position to a random point in a sphere
-        objectTransform.localPosition = spawnZone.SpawnPoint;
+        objectTransform.localPosition = SpawnZoneOfLevel.SpawnPoint;
         //Give it a random rotation
         objectTransform.localRotation = Random.rotation;
         //And scale
