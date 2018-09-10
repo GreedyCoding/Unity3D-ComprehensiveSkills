@@ -7,6 +7,8 @@ public class TransformationGrid : MonoBehaviour
 
     [SerializeField] private int gridResolution = 10;
 
+    private Matrix4x4 transformation;
+
     private Transform[] grid;
 
     private List<Transformation> transformations;
@@ -33,15 +35,32 @@ public class TransformationGrid : MonoBehaviour
 
     private void Update()
     {
+        UpdateTransformation();
+        //Getting the transformations 
         GetComponents<Transformation>(transformations);
+        //Looping through all grid spots
         for (int i = 0, z = 0; z < gridResolution; z++)
         {
             for (int y = 0; y < gridResolution; y++)
             {
                 for (int x = 0; x < gridResolution; x++, i++)
                 {
+                    //and applying TransformPoint to them in update so we can see the changes in the editor
                     grid[i].localPosition = TransformPoint(x, y, z);
                 }
+            }
+        }
+    }
+
+    void UpdateTransformation()
+    {
+        GetComponents<Transformation>(transformations);
+        if (transformations.Count > 0)
+        {
+            transformation = transformations[0].Matrix;
+            for (int i = 1; i < transformations.Count; i++)
+            {
+                transformation = transformations[i].Matrix * transformation;
             }
         }
     }
@@ -79,12 +98,7 @@ public class TransformationGrid : MonoBehaviour
     {
         //Get the current coordinates
         Vector3 coordinates = GetCoordinates(x, y, z);
-        for (int i = 0; i < transformations.Count; i++)
-        {
-            //Apply all transformations to the coordinates
-            coordinates = transformations[i].Apply(coordinates);
-        }
-        //And return them
-        return coordinates;
+        //Multiply the matrices and return the Vector
+        return transformation.MultiplyPoint(coordinates);
     }
 }

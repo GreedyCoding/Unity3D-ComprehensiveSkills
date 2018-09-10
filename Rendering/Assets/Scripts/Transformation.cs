@@ -2,8 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//Abstract class we dont use we just inherit from this
+//Abstract class to inherit all transformations from this
 public abstract class Transformation : MonoBehaviour
 {
-    public abstract Vector3 Apply(Vector3 point);
+    //Matrix to store the transformation
+    public abstract Matrix4x4 Matrix { get; }
+
+    public Vector3 Apply(Vector3 point)
+    {
+        //Grabs the Matrix and performs the multiplication
+        return Matrix.MultiplyPoint(point);
+    }
 }
