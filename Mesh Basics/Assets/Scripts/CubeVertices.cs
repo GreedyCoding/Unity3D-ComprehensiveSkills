@@ -23,7 +23,7 @@ public class CubeVertices : MonoBehaviour
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
         mesh.name = "Procedural Cube";
         StartCoroutine(CreateVertices());
-        StartCoroutine(CreateTriangles());
+
     }
 
     private void OnDrawGizmos()
@@ -99,12 +99,13 @@ public class CubeVertices : MonoBehaviour
                 yield return new WaitForSeconds(0.05f);
             }
         }
+        StartCoroutine(CreateTriangles());
     }
 
     IEnumerator CreateTriangles()
     {
         //Calculating how many quads we have
-        int quads = ((xSize * ySize) + (xSize * zSize) + (ySize * zSize)) * 2;
+        int quads = 24;
         //Creating int array with quads times 6 because there are 6 vertices needed for 1 quad
         int[] triangles = new int[quads * 6];
         //Calculating the size of the ring
@@ -121,7 +122,6 @@ public class CubeVertices : MonoBehaviour
             t = SetQuad(triangles, t, v, v - ring + 1, v + ring, v + 1);
             yield return new WaitForSeconds(0.05f);
         }
-
         mesh.triangles = triangles;
     }
 
@@ -131,6 +131,7 @@ public class CubeVertices : MonoBehaviour
         triangles[i + 1] = triangles[i + 4] = v01;
         triangles[i + 2] = triangles[i + 3] = v10;
         triangles[i + 5] = v11;
+        Debug.Log(i);
         return i + 6;
     }
 }
