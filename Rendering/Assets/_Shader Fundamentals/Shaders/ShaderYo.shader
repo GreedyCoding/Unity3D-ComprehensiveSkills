@@ -6,6 +6,7 @@ Shader "Unlit/ShaderYo"
 	Properties
 	{
 		_Tint("Tint", Color) = (1, 1, 1, 1)
+		_MainTex("Texture", 2D) = "white" {}
 	}
 
 	//You can use SubShaders to group multiple shader variants together
@@ -25,16 +26,32 @@ Shader "Unlit/ShaderYo"
 			#include "UnityCG.cginc"
 
 			float4 _Tint;
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
 
-			float4 VertexProgramYo(float4 position : POSITION, out float3 localPosition : TEXCOORD0) : SV_POSITION
+			//Setting up this struct so the FragmentProgram values are not that intimidating
+			struct Interpolators 
 			{
-				localPosition = position.xyz;
-				return UnityObjectToClipPos(position);
+				float4 position : SV_POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+			struct VertexData {
+				float4 position : POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+			Interpolators VertexProgramYo(VertexData v)
+			{
+				Interpolators i;
+				i.position = UnityObjectToClipPos(v.position);
+				i.uv = TRANSFORM_TEX(v.uv, _MainTex);
+				return i;
 			}
 
-			float4 FragmentProgramYo(float4 position : SV_POSITION, float3 localPosition : TEXCOORD0) : SV_TARGET
+			float4 FragmentProgramYo(Interpolators i) : SV_TARGET
 			{
-				return float4(localPosition, 1);
+				return tex2D(_MainTex, i.uv);
 			}
 
 			//Ending the code here
